@@ -17,7 +17,9 @@ import {
   ShieldAlert,
   UserCheck,
   Home,
-  LayoutDashboard
+  LayoutDashboard,
+  LogOut,
+  KeyRound
 } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
 import { UserRole } from '../types';
@@ -26,10 +28,11 @@ interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   openCreateModal: () => void;
+  openAuthModal?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openCreateModal }) => {
-  const { user, theme, toggleTheme, isSoundEnabled, toggleSound, togglePrivacy, switchDemoUser } = useAuthStore();
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openCreateModal, openAuthModal }) => {
+  const { user, theme, toggleTheme, isSoundEnabled, toggleSound, togglePrivacy, switchDemoUser, logout } = useAuthStore();
   const [demoMenuOpen, setDemoMenuOpen] = useState(false);
 
   const demoResidents = [
@@ -234,11 +237,32 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openCre
                       <UserCheck className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-teal-600 transition" />
                     </button>
                   ))}
-                  <div className="pt-1 mt-1 border-t border-zinc-100 dark:border-zinc-800">
-                    <div className="px-2 py-1 flex items-center justify-between text-[11px] text-zinc-500">
-                      <span>Society Phase:</span>
-                      <span className="font-medium text-teal-600">{user?.phase || 'Phase 1'}</span>
-                    </div>
+                  <div className="pt-1 mt-1 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
+                    <button
+                      onClick={() => {
+                        setDemoMenuOpen(false);
+                        openAuthModal?.();
+                      }}
+                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 flex items-center justify-between"
+                    >
+                      <span className="flex items-center">
+                        <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+                        Specific Login Portals
+                      </span>
+                      <span className="text-[10px] text-zinc-400">Admin / Flat</span>
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        setDemoMenuOpen(false);
+                        await logout();
+                        openAuthModal?.();
+                      }}
+                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center space-x-1.5"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Log Out</span>
+                    </button>
                   </div>
                 </div>
               )}

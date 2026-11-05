@@ -8,6 +8,7 @@ import { OrdersPage } from './pages/OrdersPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { ResidentDashboardPage } from './pages/ResidentDashboardPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { AuthPage } from './pages/AuthPage';
 import { useAuthStore } from './stores/useAuthStore';
 import { SocketProvider } from './context/SocketContext';
 import { Toaster } from 'sonner';
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
   const { init, isLoading, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<string>('marketplace');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
@@ -35,6 +37,22 @@ export const App: React.FC = () => {
     );
   }
 
+  if (!user || isAuthModalOpen) {
+    return (
+      <AuthPage
+        onSuccess={(portal) => {
+          setIsAuthModalOpen(false);
+          if (portal === 'admin') {
+            setActiveTab('admin');
+          } else {
+            setActiveTab('resident_hub');
+          }
+        }}
+        defaultPortal={user?.role === 'committee_admin' ? 'admin' : 'resident'}
+      />
+    );
+  }
+
   return (
     <SocketProvider>
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
@@ -45,6 +63,7 @@ export const App: React.FC = () => {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           openCreateModal={() => setIsCreateModalOpen(true)}
+          openAuthModal={() => setIsAuthModalOpen(true)}
         />
 
         {/* Main Content Area */}
