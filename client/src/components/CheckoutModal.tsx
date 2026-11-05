@@ -322,3 +322,4 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose, 
     </AnimatePresence>
   );
 };
+

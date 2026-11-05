@@ -6,7 +6,8 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { NoticesPage } from './pages/NoticesPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { MessagesPage } from './pages/MessagesPage';
-import { AdminPage } from './pages/AdminPage';
+import { ResidentDashboardPage } from './pages/ResidentDashboardPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { useAuthStore } from './stores/useAuthStore';
 import { SocketProvider } from './context/SocketContext';
 import { Toaster } from 'sonner';
@@ -56,14 +57,22 @@ export const App: React.FC = () => {
             />
           )}
 
+          {activeTab === 'resident_hub' && (
+            <ResidentDashboardPage
+              openCreateModal={() => setIsCreateModalOpen(true)}
+              onNavigateToOrders={() => setActiveTab('orders')}
+              onNavigateToMarketplace={() => setActiveTab('marketplace')}
+            />
+          )}
+
           {activeTab === 'notices' && <NoticesPage />}
 
           {activeTab === 'orders' && <OrdersPage />}
 
           {activeTab === 'chat' && <MessagesPage />}
 
-          {activeTab === 'admin' && user?.role === 'committee_admin' && (
-            <AdminPage />
+          {activeTab === 'admin' && (
+            <AdminDashboardPage />
           )}
         </main>
 
@@ -85,3 +94,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

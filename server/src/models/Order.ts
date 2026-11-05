@@ -61,3 +61,4 @@ OrderSchema.index({ seller: 1, createdAt: -1 });
 OrderSchema.index({ status: 1 });
 
 export const Order = mongoose.model<IOrderDocument>('Order', OrderSchema);
+

@@ -15,7 +15,9 @@ import {
   ShoppingBag, 
   MessageSquareText, 
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  Home,
+  LayoutDashboard
 } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
 import { UserRole } from '../types';
@@ -86,6 +88,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openCre
             >
               <Bell className="w-4 h-4" />
               <span>Notice Board</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('resident_hub')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center space-x-1.5 ${
+                activeTab === 'resident_hub'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-semibold shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Flat Owner Hub</span>
             </button>
 
             <button
@@ -203,6 +217,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openCre
                       onClick={() => {
                         switchDemoUser(item.role);
                         setDemoMenuOpen(false);
+                        if (item.role === 'committee_admin') {
+                          setActiveTab('admin');
+                        } else {
+                          setActiveTab('resident_hub');
+                        }
                       }}
                       className="w-full text-left px-2.5 py-2 rounded-lg text-xs hover:bg-teal-50 dark:hover:bg-teal-950/40 flex items-center justify-between transition group"
                     >
@@ -230,3 +249,4 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openCre
     </header>
   );
 };
+

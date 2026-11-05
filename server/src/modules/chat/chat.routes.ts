@@ -11,3 +11,4 @@ router.get('/messages/:contactId', ChatController.getMessages);
 router.post('/messages', ChatController.sendMessage);
 
 export default router;
+

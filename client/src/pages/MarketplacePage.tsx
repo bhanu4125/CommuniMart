@@ -347,3 +347,4 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({ openCreateModa
     </div>
   );
 };
+

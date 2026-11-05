@@ -371,3 +371,4 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
     </AnimatePresence>
   );
 };
+

@@ -10,6 +10,7 @@ export interface ProductFilterQuery {
   available?: string;
   minPrice?: string;
   maxPrice?: string;
+  sellerId?: string;
   sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
 }
 
@@ -35,6 +36,10 @@ export class ProductService {
 
     if (query.condition && query.condition !== 'All') {
       filter.condition = query.condition;
+    }
+
+    if (query.sellerId) {
+      filter.seller = query.sellerId;
     }
 
     if (query.minPrice || query.maxPrice) {
@@ -145,3 +150,4 @@ export class ProductService {
     return product;
   }
 }
+

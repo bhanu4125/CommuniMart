@@ -12,3 +12,4 @@ router.delete('/:id', authenticate, ProductController.delete);
 router.patch('/:id/toggle-availability', authenticate, ProductController.toggleAvailability);
 
 export default router;
+

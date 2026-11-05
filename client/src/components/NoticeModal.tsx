@@ -185,3 +185,4 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({ isOpen, onClose, onSuc
     </AnimatePresence>
   );
 };
+

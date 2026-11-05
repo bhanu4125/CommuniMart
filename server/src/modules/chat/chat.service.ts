@@ -105,3 +105,4 @@ export class ChatService {
       .populate('product', 'title price images listingMode');
   }
 }
+

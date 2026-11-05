@@ -30,3 +30,4 @@ NoticeSchema.index({ createdAt: -1 });
 NoticeSchema.index({ category: 1, resolved: 1 });
 
 export const Notice = mongoose.model<INoticeDocument>('Notice', NoticeSchema);
+

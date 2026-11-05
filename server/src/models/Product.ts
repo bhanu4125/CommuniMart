@@ -58,3 +58,4 @@ ProductSchema.index({ price: 1 });
 ProductSchema.index({ createdAt: -1 });
 
 export const Product = mongoose.model<IProductDocument>('Product', ProductSchema);
+

@@ -108,3 +108,4 @@ You can use the **1-Click Resident Switcher** in the top navigation bar to test 
    - *Listings*: Bose QuietComfort 45, LG 4K Monitor
 4. **Sneha Patel** (`Tower A-303`) — **New Resident (Pending Approval)**
    - Test committee approval workflow from Vikram's Admin panel!
+

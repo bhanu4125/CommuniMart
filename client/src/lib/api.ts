@@ -67,3 +67,4 @@ export const adminAPI = {
   getResidents: () => api.get<{ success: boolean; count: number; data: IUser[] }>('/admin/residents'),
   updateResident: (id: string, data: any) => api.patch<{ success: boolean; data: IUser }>(`/admin/residents/${id}`, data)
 };
+

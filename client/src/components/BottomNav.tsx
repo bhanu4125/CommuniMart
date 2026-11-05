@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Store, Bell, ShoppingBag, MessageSquareText, ShieldAlert } from 'lucide-react';
+import { Store, Bell, ShoppingBag, MessageSquareText, ShieldAlert, Home } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
 
 interface BottomNavProps {
@@ -13,6 +13,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
 
   const tabs = [
     { id: 'marketplace', label: 'Market', icon: Store },
+    { id: 'resident_hub', label: 'My Flat', icon: Home },
     { id: 'notices', label: 'Notices', icon: Bell },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'chat', label: 'Chat', icon: MessageSquareText },
@@ -50,3 +51,4 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
     </div>
   );
 };
+

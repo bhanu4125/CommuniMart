@@ -13,3 +13,4 @@ router.get('/residents', AdminController.getResidents);
 router.patch('/residents/:id', AdminController.updateResident);
 
 export default router;
+

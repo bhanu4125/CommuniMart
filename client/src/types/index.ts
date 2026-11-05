@@ -130,3 +130,4 @@ export interface INotice {
   repliesCount: number;
   createdAt: string;
 }
+

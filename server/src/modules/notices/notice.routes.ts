@@ -9,3 +9,4 @@ router.post('/', authenticate, NoticeController.create);
 router.patch('/:id/resolve', authenticate, NoticeController.toggleResolve);
 
 export default router;
+
