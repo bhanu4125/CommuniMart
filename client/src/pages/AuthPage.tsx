@@ -374,3 +374,4 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess, defaultPortal = '
     </div>
   );
 };
+
