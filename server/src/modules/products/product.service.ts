@@ -101,10 +101,37 @@ export class ProductService {
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
 
+    if (!data.title || !data.title.trim()) {
+      throw new Error('Title is required');
+    }
+    if (!data.description || !data.description.trim()) {
+      throw new Error('Description is required');
+    }
+
+    const price = data.listingMode === 'giveaway' ? 0 : Number(data.price) || 0;
+    const handoverOptions = (Array.isArray(data.handoverOptions) && data.handoverOptions.length > 0)
+      ? data.handoverOptions
+      : ['Doorstep Delivery', 'Club House / Security Gate Drop-box', 'Direct Pickup from Seller Flat'];
+
+    const images = (Array.isArray(data.images) && data.images.filter(Boolean).length > 0)
+      ? data.images.filter(Boolean)
+      : ['https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?w=600'];
+
     const product = await Product.create({
-      ...data,
+      title: data.title.trim(),
+      description: data.description.trim(),
+      category: data.category || 'Fresh Home Bakes & Meals',
+      listingMode: data.listingMode || 'sell',
+      price,
+      rentDuration: data.listingMode === 'rent' ? data.rentDuration || 'day' : undefined,
+      rentDeposit: data.listingMode === 'rent' ? Number(data.rentDeposit) || 0 : 0,
+      condition: data.condition || 'Like New',
+      images,
+      handoverOptions,
+      tags: Array.isArray(data.tags) ? data.tags : [],
       seller: userId,
-      block: user.block
+      block: user.block || 'Tower A',
+      available: true
     });
 
     return Product.findById(product._id).populate('seller', '-passwordHash');

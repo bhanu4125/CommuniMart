@@ -78,6 +78,7 @@ export const App: React.FC = () => {
 
           {activeTab === 'resident_hub' && (
             <ResidentDashboardPage
+              key={`hub-${refreshTrigger}`}
               openCreateModal={() => setIsCreateModalOpen(true)}
               onNavigateToOrders={() => setActiveTab('orders')}
               onNavigateToMarketplace={() => setActiveTab('marketplace')}

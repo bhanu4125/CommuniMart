@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   Sparkles, 
   Plus, 
   Check, 
+  Upload, 
+  Link as LinkIcon, 
   Image as ImageIcon, 
-  HelpCircle 
+  AlertCircle,
+  Trash2,
+  PackageCheck
 } from 'lucide-react';
 import { ItemCategory, ListingMode, ItemCondition, HandoverOption } from '../types';
 import { productsAPI } from '../lib/api';
+import { useAuthStore } from '../stores/useAuthStore';
 import { sounds } from '../lib/sound';
 import { toast } from 'sonner';
 
@@ -40,15 +45,22 @@ const PRESET_IMAGES = [
 ];
 
 export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const { user } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ItemCategory>('Fresh Home Bakes & Meals');
   const [listingMode, setListingMode] = useState<ListingMode>('sell');
-  const [price, setPrice] = useState<number>(200);
+  const [price, setPrice] = useState<string>('250');
   const [rentDuration, setRentDuration] = useState<'hour' | 'day' | 'week'>('day');
-  const [rentDeposit, setRentDeposit] = useState<number>(0);
+  const [rentDeposit, setRentDeposit] = useState<string>('500');
   const [condition, setCondition] = useState<ItemCondition>('Like New');
-  const [imageUrl, setImageUrl] = useState('');
+  
+  // Image handling: supports local file upload, URL, and preset
+  const [imagePreview, setImagePreview] = useState<string>(PRESET_IMAGES[0].url);
+  const [customImageUrl, setCustomImageUrl] = useState<string>('');
+
   const [handoverOptions, setHandoverOptions] = useState<HandoverOption[]>([
     'Doorstep Delivery',
     'Club House / Security Gate Drop-box',
@@ -57,13 +69,55 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
   const [tagsInput, setTagsInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      if (!imagePreview) {
+        setImagePreview(PRESET_IMAGES[0].url);
+      }
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error('Image file too large. Please select a photo under 8MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setImagePreview(reader.result);
+        sounds.playPop();
+        toast.success('Photo selected from device!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePresetSelect = (url: string) => {
+    setImagePreview(url);
+    sounds.playPop();
+  };
+
+  const handleUrlChange = (url: string) => {
+    setCustomImageUrl(url);
+    if (url.trim()) {
+      setImagePreview(url.trim());
+    }
+  };
 
   const toggleHandover = (opt: HandoverOption) => {
     sounds.playPop();
     if (handoverOptions.includes(opt)) {
       if (handoverOptions.length > 1) {
         setHandoverOptions(handoverOptions.filter(h => h !== opt));
+      } else {
+        toast.error('At least one society handover option must be supported');
       }
     } else {
       setHandoverOptions([...handoverOptions, opt]);
@@ -72,37 +126,72 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) {
-      toast.error('Please fill in title and description');
+
+    if (!user) {
+      toast.error('Please log in to post a community listing');
+      return;
+    }
+
+    if (!title.trim() || title.trim().length < 3) {
+      toast.error('Please enter a descriptive title (at least 3 characters)');
+      return;
+    }
+
+    if (!description.trim() || description.trim().length < 5) {
+      toast.error('Please enter description details (at least 5 characters)');
+      return;
+    }
+
+    const numericPrice = listingMode === 'giveaway' ? 0 : Number(price);
+    if (listingMode !== 'giveaway' && (isNaN(numericPrice) || numericPrice <= 0)) {
+      toast.error('Please enter a valid price greater than 0');
+      return;
+    }
+
+    if (handoverOptions.length === 0) {
+      toast.error('Please select at least one handover option');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const tags = tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-      const img = imageUrl.trim() || PRESET_IMAGES[0].url;
+      const tags = tagsInput
+        .split(',')
+        .map(t => t.trim().toLowerCase())
+        .filter(Boolean);
+
+      const finalImage = imagePreview.trim() || PRESET_IMAGES[0].url;
 
       await productsAPI.create({
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         category,
         listingMode,
-        price: listingMode === 'giveaway' ? 0 : Number(price),
+        price: numericPrice,
         rentDuration: listingMode === 'rent' ? rentDuration : undefined,
-        rentDeposit: listingMode === 'rent' ? Number(rentDeposit) : 0,
+        rentDeposit: listingMode === 'rent' ? Number(rentDeposit) || 0 : 0,
         condition,
-        images: [img],
+        images: [finalImage],
         handoverOptions,
         tags
       });
 
       sounds.playSuccess();
-      toast.success('Listing posted to community marketplace!');
+      toast.success('Listing successfully published to community marketplace!');
+      
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setPrice('250');
+      setCustomImageUrl('');
+      setTagsInput('');
+      
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error('Failed to create listing', {
-        description: err.response?.data?.message || err.message
+      console.error('Create listing error:', err);
+      toast.error('Failed to post listing', {
+        description: err.response?.data?.message || err.message || 'Please check your inputs'
       });
     } finally {
       setIsSubmitting(false);
@@ -132,10 +221,10 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
             <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
               <div>
                 <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-50">
-                  Post to CommuniMart
+                  Post Item / Offer Service
                 </h3>
                 <p className="text-xs text-zinc-500">
-                  List items, bakes, rentals, or skills for your gated society neighbors
+                  Publish to Green Meadows Gated Society ({user?.block || 'Tower A'})
                 </p>
               </div>
               <button
@@ -147,7 +236,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-4 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-4 max-h-[72vh] overflow-y-auto pr-1">
               {/* Category */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
@@ -156,7 +245,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ItemCategory)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-500 font-semibold"
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -167,19 +256,19 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
               {/* Title */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
-                  Listing Title
+                  Listing Title <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g., Homemade Cinnamon Rolls (Box of 4), or Bose QC45 Headphones"
+                  placeholder="e.g. Sourdough Loaf, Bose Headphones, Bosch Drill, or ICSE Math Tutoring"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium"
                 />
               </div>
 
-              {/* Mode Selection */}
+              {/* Listing Mode Selection */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
                   Listing Mode
@@ -210,38 +299,54 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
                 </div>
               </div>
 
-              {/* Price & Rent Fields */}
-              {listingMode !== 'giveaway' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Price & Rental Duration */}
+              {listingMode !== 'giveaway' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
-                      {listingMode === 'rent' ? 'Rental Rate (₹)' : 'Price (₹)'}
+                      {listingMode === 'rent' ? 'Rental Rate (₹)' : 'Price (₹)'} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
                       min={1}
+                      required
+                      placeholder="e.g. 250"
                       value={price}
-                      onChange={(e) => setPrice(Number(e.target.value))}
-                      className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold"
                     />
                   </div>
 
-                  {listingMode === 'rent' && (
+                  {listingMode === 'rent' ? (
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
-                        Per Duration
+                        Rent Interval
                       </label>
                       <select
                         value={rentDuration}
                         onChange={(e) => setRentDuration(e.target.value as any)}
-                        className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-500 font-semibold"
                       >
                         <option value="hour">Per Hour</option>
                         <option value="day">Per Day</option>
                         <option value="week">Per Week</option>
                       </select>
                     </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                        Pricing Type
+                      </label>
+                      <div className="text-xs px-3.5 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 font-bold">
+                        Fixed Community Price
+                      </div>
+                    </div>
                   )}
+                </div>
+              ) : (
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center">
+                  <Sparkles className="w-4 h-4 mr-2 text-emerald-600" />
+                  Free giveaway mode: Price set to ₹0. Any verified neighbor can claim!
                 </div>
               )}
 
@@ -256,10 +361,10 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
                       key={cond}
                       type="button"
                       onClick={() => setCondition(cond)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
                         condition === cond
-                          ? 'bg-teal-600 text-white border-teal-600'
-                          : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300'
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100'
                       }`}
                     >
                       {cond}
@@ -271,7 +376,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
               {/* Description */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
-                  Description & Society Notes
+                  Description & Society Notes <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   rows={3}
@@ -283,37 +388,93 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
                 />
               </div>
 
-              {/* Image URL & Preset Samples */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  Image URL or Choose Preset
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] text-zinc-400 font-medium">Quick Presets:</span>
-                  {PRESET_IMAGES.map((p, i) => (
+              {/* Photo Upload & Presets Section */}
+              <div className="space-y-2.5 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center">
+                    <ImageIcon className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                    Product Image (Upload, Preset, or URL)
+                  </label>
+                  <span className="text-[10px] text-zinc-400 font-medium">1 Photo Required</span>
+                </div>
+
+                {/* Live Image Preview + Upload button */}
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shrink-0 relative group">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                      <span className="text-[10px] text-white font-bold">Active Photo</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-2 w-full">
+                    {/* Hidden File Input */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+
+                    {/* Upload from Device Button */}
                     <button
-                      key={i}
                       type="button"
-                      onClick={() => setImageUrl(p.url)}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-teal-50 dark:hover:bg-teal-950/60 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2 px-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-teal-500 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition flex items-center justify-center space-x-2"
                     >
-                      {p.name}
+                      <Upload className="w-4 h-4 text-teal-600" />
+                      <span>Choose Photo from Device / Camera</span>
                     </button>
-                  ))}
+
+                    {/* Web URL input */}
+                    <div className="flex items-center space-x-1.5">
+                      <input
+                        type="url"
+                        placeholder="Or paste an image web link (https://...)"
+                        value={customImageUrl}
+                        onChange={(e) => handleUrlChange(e.target.value)}
+                        className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preset samples */}
+                <div className="pt-1">
+                  <span className="text-[10px] font-bold text-zinc-400 block mb-1.5">
+                    Or Pick a Community Preset:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {PRESET_IMAGES.map((p, i) => {
+                      const isSelected = imagePreview === p.url;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => handlePresetSelect(p.url)}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition ${
+                            isSelected
+                              ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
+                              : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-teal-500'
+                          }`}
+                        >
+                          {p.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
               {/* Handover Options Checkboxes */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Handover Options Supported
+                  Handover Options Supported <span className="text-rose-500">*</span>
                 </label>
                 <div className="space-y-1.5">
                   {(['Doorstep Delivery', 'Club House / Security Gate Drop-box', 'Direct Pickup from Seller Flat'] as HandoverOption[]).map((opt) => (
@@ -336,7 +497,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
               {/* Tags */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
-                  Tags (comma separated)
+                  Keywords & Tags (comma separated)
                 </label>
                 <input
                   type="text"
@@ -347,7 +508,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
                 />
               </div>
 
-              {/* Submit */}
+              {/* Submit Button */}
               <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-end space-x-3">
                 <button
                   type="button"
@@ -359,9 +520,10 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-md transition"
+                  className="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-md transition flex items-center space-x-1.5"
                 >
-                  {isSubmitting ? 'Posting...' : 'Post Listing'}
+                  <PackageCheck className="w-4 h-4" />
+                  <span>{isSubmitting ? 'Publishing Item...' : 'Publish Listing'}</span>
                 </button>
               </div>
             </form>
@@ -371,4 +533,3 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({ isOpen, 
     </AnimatePresence>
   );
 };
-
