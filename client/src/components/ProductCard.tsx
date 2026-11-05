@@ -104,7 +104,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, onO
             <span className="font-semibold text-teal-700 dark:text-teal-400 truncate max-w-[150px]">
               {product.category}
             </span>
-            <span className="inline-flex items-center bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="inline-flex items-center bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-md text-[11px] font-bold text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-200 dark:ring-zinc-700/50">
               <MapPin className="w-3 h-3 mr-1 text-teal-600" />
               {product.block}
             </span>
