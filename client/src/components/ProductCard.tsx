@@ -16,6 +16,7 @@ import { IProduct } from '../types';
 import { formatINR } from '../lib/utils';
 import { useSocket } from '../context/SocketContext';
 import { sounds } from '../lib/sound';
+import { formatINR } from '../lib/formatters';
 
 interface ProductCardProps {
   product: IProduct;
