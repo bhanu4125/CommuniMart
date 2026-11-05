@@ -6,7 +6,6 @@
 ---
 
 ## 🌟 Overview & Mission
-
 **CommuniMart** is a production-grade, hyper-polished community marketplace crafted exclusively for residents of a gated residential society (**Green Meadows Gated Community**). It solves the unique domestic challenges of gated living:
 1. **Safety & Privacy**: Verified residents only; flat/villa numbers are protected with privacy masking toggles until order confirmation.
 2. **Circular Economy & Decluttering**: Pre-loved household goods, power tools, kids toys, and books stay within the society instead of going to landfills.
