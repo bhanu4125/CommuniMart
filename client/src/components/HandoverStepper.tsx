@@ -3,10 +3,10 @@ import { Check } from 'lucide-react';
 import { OrderStatus } from '../types';
 
 const STEPS: { status: OrderStatus; label: string }[] = [
-  { status: 'requested', label: 'Requested' },
-  { status: 'accepted', label: 'Accepted' },
-  { status: 'ready_for_handover', label: 'Ready' },
-  { status: 'completed', label: 'Completed' }
+  { status: 'Requested', label: 'Requested' },
+  { status: 'Accepted by Neighbor', label: 'Accepted' },
+  { status: 'Ready for Handover', label: 'Ready' },
+  { status: 'Completed', label: 'Completed' }
 ];
 
 interface StepperProps {

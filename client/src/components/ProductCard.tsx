@@ -13,7 +13,6 @@ import {
   Star 
 } from 'lucide-react';
 import { IProduct } from '../types';
-import { formatINR } from '../lib/utils';
 import { useSocket } from '../context/SocketContext';
 import { sounds } from '../lib/sound';
 import { formatINR } from '../lib/formatters';
