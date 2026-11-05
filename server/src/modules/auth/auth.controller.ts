@@ -31,6 +31,28 @@ export class AuthController {
     }
   }
 
+  static async adminLogin(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+      const { user, token } = await AuthService.adminLogin(email, password);
+      res.cookie('token', token, cookieOptions);
+      res.json({ success: true, user, token, portal: 'admin' });
+    } catch (error: any) {
+      res.status(401).json({ success: false, message: error.message });
+    }
+  }
+
+  static async residentLogin(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+      const { user, token } = await AuthService.residentLogin(email, password);
+      res.cookie('token', token, cookieOptions);
+      res.json({ success: true, user, token, portal: 'resident' });
+    } catch (error: any) {
+      res.status(401).json({ success: false, message: error.message });
+    }
+  }
+
   static async demoLogin(req: Request, res: Response): Promise<void> {
     try {
       const role = (req.body.role || 'resident') as any;

@@ -494,3 +494,4 @@ export const ResidentDashboardPage: React.FC<ResidentDashboardProps> = ({
     </div>
   );
 };
+

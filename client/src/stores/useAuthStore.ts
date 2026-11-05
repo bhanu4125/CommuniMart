@@ -12,6 +12,8 @@ interface AuthState {
   init: () => Promise<void>;
   setUser: (user: IUser | null, token?: string) => void;
   login: (data: any) => Promise<void>;
+  adminLogin: (data: any) => Promise<void>;
+  residentLogin: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   switchDemoUser: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
@@ -65,6 +67,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (credentials) => {
     const res = await authAPI.login(credentials);
+    if (res.data.success) {
+      localStorage.setItem('communimart_token', res.data.token);
+      set({ user: res.data.user, token: res.data.token });
+      sounds.playSuccess();
+    }
+  },
+
+  adminLogin: async (credentials) => {
+    const res = await authAPI.adminLogin(credentials);
+    if (res.data.success) {
+      localStorage.setItem('communimart_token', res.data.token);
+      set({ user: res.data.user, token: res.data.token });
+      sounds.playSuccess();
+    }
+  },
+
+  residentLogin: async (credentials) => {
+    const res = await authAPI.residentLogin(credentials);
     if (res.data.success) {
       localStorage.setItem('communimart_token', res.data.token);
       set({ user: res.data.user, token: res.data.token });
