@@ -11,6 +11,7 @@ import noticeRoutes from './modules/notices/notice.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import { healthCheckHandler } from './modules/health';
 import { errorHandler } from './middleware/errorHandler';
+import { requestLogger } from './middleware/requestLogger';
 
 dotenv.config();
 
