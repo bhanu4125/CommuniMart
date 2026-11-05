@@ -1,3 +1,5 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 import jwt from 'jsonwebtoken';
 
 describe('JWT Auth Token Utility', () => {
@@ -7,7 +9,7 @@ describe('JWT Auth Token Utility', () => {
     const payload = { userId: '12345', role: 'resident' };
     const token = jwt.sign(payload, secret, { expiresIn: '1h' });
     const decoded = jwt.verify(token, secret) as any;
-    expect(decoded.userId).toBe('12345');
-    expect(decoded.role).toBe('resident');
+    assert.strictEqual(decoded.userId, '12345');
+    assert.strictEqual(decoded.role, 'resident');
   });
 });
