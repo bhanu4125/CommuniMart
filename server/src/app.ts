@@ -9,6 +9,7 @@ import orderRoutes from './modules/orders/order.routes';
 import chatRoutes from './modules/chat/chat.routes';
 import noticeRoutes from './modules/notices/notice.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import { healthCheckHandler } from './modules/health';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -43,6 +44,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/admin', adminRoutes);
+app.get('/api/health', healthCheckHandler);
 
 app.get('/api/health', (_req, res) => {
   res.json({
