@@ -47,16 +47,6 @@ app.use('/api/notices', noticeRoutes);
 app.use('/api/admin', adminRoutes);
 app.get('/api/health', healthCheckHandler);
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'online',
-    service: 'CommuniMart API',
-    society: 'Green Meadows Gated Community',
-    timestamp: new Date().toISOString()
-  });
-});
-
 app.use(errorHandler);
 
 export default app;
-
