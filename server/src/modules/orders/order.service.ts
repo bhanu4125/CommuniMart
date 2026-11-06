@@ -154,14 +154,29 @@ export class OrderService {
       throw new Error('Only completed orders can be reviewed');
     }
 
-    order.review = {
-      rating,
-      comment,
-      badgesAwarded,
-      createdAt: new Date()
-    };
+    const reviewedOrder = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        buyer: userId,
+        status: 'Completed',
+        review: { $exists: false }
+      },
+      {
+        $set: {
+          review: {
+            rating,
+            comment,
+            badgesAwarded,
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
 
-    await order.save();
+    if (!reviewedOrder) {
+      throw new Error('This order has already been reviewed');
+    }
 
     // Update seller's rating & badges
     const seller = await User.findById(order.seller);
@@ -178,7 +193,7 @@ export class OrderService {
       await seller.save();
     }
 
-    return order;
+    return reviewedOrder;
   }
 
   static async getOrderById(userId: string, orderId: string, userRole?: string) {
@@ -213,4 +228,3 @@ export class OrderService {
     return orders;
   }
 }
-
