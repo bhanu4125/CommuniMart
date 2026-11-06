@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
   Filter, 
@@ -24,6 +24,7 @@ import { ProductDrawer } from '../components/ProductDrawer';
 import { CheckoutModal } from '../components/CheckoutModal';
 import { ChatDrawer } from '../components/ChatDrawer';
 import { sounds } from '../lib/sound';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface MarketplacePageProps {
   openCreateModal: () => void;
@@ -48,6 +49,8 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({ openCreateModa
   const [products, setProducts] = useState<IProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search);
+  const latestRequest = useRef(0);
   const [category, setCategory] = useState<ItemCategory | 'All'>('All');
   const [listingMode, setListingMode] = useState<ListingMode | 'all'>('all');
   const [block, setBlock] = useState('All');
@@ -62,34 +65,31 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({ openCreateModa
 
   useEffect(() => {
     fetchProducts();
-  }, [category, listingMode, block, condition, sortBy]);
-
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+  }, [category, listingMode, block, condition, sortBy, debouncedSearch]);
 
   const fetchProducts = async () => {
+    const requestId = ++latestRequest.current;
     try {
       setIsLoading(true);
       const params: any = { sortBy };
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (category !== 'All') params.category = category;
       if (listingMode !== 'all') params.listingMode = listingMode;
       if (block !== 'All') params.block = block;
       if (condition !== 'All') params.condition = condition;
 
       const res = await productsAPI.list(params);
-      if (res.data.success) {
+      if (requestId === latestRequest.current && res.data.success) {
         setProducts(res.data.data);
       }
     } catch (err) {
-      console.error('Failed to load products', err);
+      if (requestId === latestRequest.current) {
+        console.error('Failed to load products', err);
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === latestRequest.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -347,4 +347,3 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({ openCreateModa
     </div>
   );
 };
-
