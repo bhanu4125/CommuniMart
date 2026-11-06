@@ -77,10 +77,12 @@ export class ChatService {
       .sort({ createdAt: 1 });
 
     // Mark as read
-    await Message.updateMany(
-      { sender: contactId, recipient: userId, read: false },
-      { $set: { read: true } }
-    );
+    const unreadQuery: any = { sender: contactId, recipient: userId, read: false };
+    if (productId) {
+      unreadQuery.product = productId;
+    }
+
+    await Message.updateMany(unreadQuery, { $set: { read: true } });
 
     return messages;
   }
