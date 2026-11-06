@@ -1,5 +1,6 @@
 import { Product, IProductDocument } from '../../models/Product';
 import { User } from '../../models/User';
+import { escapeRegex } from '../../utils/escapeRegex';
 
 export interface ProductFilterQuery {
   search?: string;
@@ -49,7 +50,7 @@ export class ProductService {
     }
 
     if (query.search && query.search.trim()) {
-      const regex = new RegExp(query.search.trim(), 'i');
+      const regex = new RegExp(escapeRegex(query.search.trim()), 'i');
       filter.$or = [
         { title: { $regex: regex } },
         { description: { $regex: regex } },
@@ -177,4 +178,3 @@ export class ProductService {
     return product;
   }
 }
-
