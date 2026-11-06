@@ -27,6 +27,9 @@ export class ChatService {
           },
           lastMessage: { $first: '$$ROOT' }
         }
+      },
+      {
+        $sort: { 'lastMessage.createdAt': -1 }
       }
     ]);
 
@@ -105,4 +108,3 @@ export class ChatService {
       .populate('product', 'title price images listingMode');
   }
 }
-
