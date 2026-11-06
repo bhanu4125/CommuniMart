@@ -17,4 +17,6 @@ jobs:
           node-version: 20.x
           cache: 'npm'
       - run: npm install
+      - run: npm install --prefix server
+      - run: npm install --prefix client
       - run: npm run build
