@@ -39,7 +39,12 @@ export class ChatService {
       .select('name avatar block flatNumber hideFlatNumber rating role badges')
       .lean();
 
-    const contactMap = new Map(contacts.map(c => [c._id.toString(), c]));
+    const contactMap = new Map(contacts.map(contact => [
+      contact._id.toString(),
+      contact.hideFlatNumber
+        ? { ...contact, flatNumber: 'Masked for Privacy' }
+        : contact
+    ]));
 
     const conversations = messages.map(m => {
       const isSender = m.lastMessage.sender.toString() === userId;
@@ -68,8 +73,8 @@ export class ChatService {
     }
 
     const messages = await Message.find(query)
-      .populate('sender', 'name avatar block flatNumber')
-      .populate('recipient', 'name avatar block flatNumber')
+      .populate('sender', 'name avatar block hideFlatNumber')
+      .populate('recipient', 'name avatar block hideFlatNumber')
       .populate('product', 'title price images listingMode')
       .sort({ createdAt: 1 });
 
@@ -100,9 +105,8 @@ export class ChatService {
     });
 
     return Message.findById(message._id)
-      .populate('sender', 'name avatar block flatNumber')
-      .populate('recipient', 'name avatar block flatNumber')
+      .populate('sender', 'name avatar block hideFlatNumber')
+      .populate('recipient', 'name avatar block hideFlatNumber')
       .populate('product', 'title price images listingMode');
   }
 }
-
