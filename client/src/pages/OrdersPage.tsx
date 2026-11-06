@@ -12,6 +12,7 @@ export const OrdersPage: React.FC = () => {
   const { user } = useAuthStore();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [activeTab, setActiveTab] = useState<'purchases' | 'sales'>('purchases');
 
   const [reviewOrder, setReviewOrder] = useState<IOrder | null>(null);
@@ -28,9 +29,13 @@ export const OrdersPage: React.FC = () => {
       const res = await ordersAPI.getMyOrders();
       if (res.data.success) {
         setOrders(res.data.data);
+        setLoadError(false);
+      } else {
+        setLoadError(true);
       }
     } catch (err) {
       console.error('Failed to load orders', err);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +116,21 @@ export const OrdersPage: React.FC = () => {
             <div key={i} className="glass-card rounded-3xl p-6 h-48 animate-pulse" />
           ))}
         </div>
+      ) : loadError ? (
+        <div
+          role="alert"
+          className="glass-card rounded-3xl p-8 text-center border border-rose-200 dark:border-rose-900 space-y-3"
+        >
+          <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+            Orders could not be loaded. Check your connection and try again.
+          </p>
+          <button
+            onClick={fetchOrders}
+            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition"
+          >
+            Try again
+          </button>
+        </div>
       ) : filteredOrders.length === 0 ? (
         <div className="glass-card rounded-3xl p-12 text-center border border-zinc-200 dark:border-zinc-800 space-y-3">
           <PackageCheck className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto" />
@@ -161,4 +181,3 @@ export const OrdersPage: React.FC = () => {
     </div>
   );
 };
-
