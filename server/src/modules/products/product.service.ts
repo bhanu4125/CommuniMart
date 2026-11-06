@@ -145,7 +145,10 @@ export class ProductService {
       throw new Error('Unauthorized to modify this listing');
     }
 
-    const updated = await Product.findByIdAndUpdate(productId, data, { new: true })
+    const updated = await Product.findByIdAndUpdate(productId, data, {
+      new: true,
+      runValidators: true
+    })
       .populate('seller', '-passwordHash');
 
     return updated;
@@ -177,4 +180,3 @@ export class ProductService {
     return product;
   }
 }
-
